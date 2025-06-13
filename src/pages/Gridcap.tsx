@@ -42,7 +42,7 @@ const App: React.FC = () => {
             />
           </Box>
         </Grid>
-        <Grid size={{ xs: 12, sm: 7, md: 8 }} >
+        <Grid size={{ xs: 12, sm: 7, md: 8 }} sx={{ height: 500 }}>
           <Box mt={3} padding={3}>
             <MapComponent
               stations={filteredStations}

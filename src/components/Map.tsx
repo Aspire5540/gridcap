@@ -2,10 +2,11 @@ import React, { useEffect, useRef } from "react";
 import Map from "@arcgis/core/Map";
 import MapView from "@arcgis/core/views/MapView";
 import Graphic from "@arcgis/core/Graphic";
+// import FeatureLayer from "@arcgis/core/layers/FeatureLayer";
 import GraphicsLayer from "@arcgis/core/layers/GraphicsLayer";
-import PictureMarkerSymbol from "@arcgis/core/symbols/PictureMarkerSymbol";
+// import PictureMarkerSymbol from "@arcgis/core/symbols/PictureMarkerSymbol";
 import "@arcgis/core/assets/esri/themes/light/main.css";
-import { Zoom } from "@mui/material";
+// import { Zoom } from "@mui/material";
 import Point from "@arcgis/core/geometry/Point";
 import SimpleMarkerSymbol from "@arcgis/core/symbols/SimpleMarkerSymbol";
 
@@ -30,6 +31,8 @@ const MapComponent: React.FC<Props> = ({ stations,selectedStationId }) => {
   const mapRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
+
+
     if (!mapRef.current) return;
 
     const graphicsLayer = new GraphicsLayer();
@@ -42,7 +45,7 @@ const MapComponent: React.FC<Props> = ({ stations,selectedStationId }) => {
     });
     const map = new Map({
       basemap: "osm",
-    //   layers: [graphicsLayer],
+    //   layers: [edLayer],
     });
     map.add(graphicsLayer);
 
