@@ -3,11 +3,13 @@ import { FormControl, InputLabel, MenuItem, Select } from "@mui/material";
 
 interface Props {
   selectedYear: number | "all";
-  setSelectedYear: (year: number | "all") => void;
+  setSelectedYear: (selectedYear: number | "all") => void;
   years: number[];
+  // setSelectedStationId: (value: number | undefined) => void
 }
 
-const YearFilter: React.FC<Props> = ({ selectedYear, setSelectedYear, years }) => {
+const YearFilter: React.FC<Props> = ({ selectedYear, setSelectedYear, years}) => {
+  // setSelectedStationId(undefined);
   return (
     <FormControl size="small">
       <InputLabel id="year-label">ปี</InputLabel>

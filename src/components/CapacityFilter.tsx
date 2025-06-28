@@ -6,7 +6,7 @@ interface Props {
   setMinCapacity: (value: number) => void;
 }
 
-export const CapacityFilter: React.FC<Props> = ({ minCapacity, setMinCapacity }) => {
+export const CapacityFilter: React.FC<Props> = ({ minCapacity, setMinCapacity}) => {
   return (
     <TextField
       label="Avail Cap ที่ต้องการ (MW)"

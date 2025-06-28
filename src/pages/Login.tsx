@@ -21,7 +21,6 @@ const Login = () => {
 
             const queryParams = new URLSearchParams(location.search);
             const state = queryParams.get("session_state") ?? "";
-            console.log("login", token, codeParams);
             if (token === null && typeof codeParams !== "undefined") {
                 AuthServices.AuthServices.getToken(codeParams, window.location.origin)
                     .then((res) => {

@@ -2,20 +2,20 @@ import React from "react";
 import { Station } from "../data/station";
 import { DataGrid } from '@mui/x-data-grid';
 import Box from '@mui/material/Box';
-
+import '../App.css'
 interface Props {
-    stations: Station[];
+    stations: Station[] | undefined;
     setSelectedStationId: (value: number | undefined) => void
     // selectedStationId: string | undefined;
 
 
 }
 
-export const CapacityTable: React.FC<Props> = ({ stations,setSelectedStationId }) => {
+export const CapacityTable: React.FC<Props> = ({ stations, setSelectedStationId }) => {
     const columns = [
         { field: "subThai", headerName: "ชื่อสถานี", width: 200 },
         { field: "subEng", headerName: "ชื่อย่อสถานี", width: 200 },
-        { field: "capacityMW", headerName: "กำลังผลิต (MW)", width: 150 },
+        { field: "capacityMW", headerName: "capicty (MW)", width: 150 },
         { field: "year", headerName: "ปี", width: 100 },
     ];
     return (
@@ -31,6 +31,9 @@ export const CapacityTable: React.FC<Props> = ({ stations,setSelectedStationId }
                         },
                     },
                 }}
+                getRowClassName={(params) =>
+                    params.row.lat === 0 ? 'highlight-zero' : ''
+                }
                 pageSizeOptions={[5]}
                 // checkboxSelection
                 disableRowSelectionOnClick
