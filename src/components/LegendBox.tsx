@@ -20,11 +20,11 @@ const LegendBox: React.FC = () => {
       <Stack spacing={1}>
         <Box display="flex" alignItems="center">
           <Box sx={{ width: 12, height: 12, bgcolor: 'green', mr: 1 }} />
-          <Typography variant="body2">&gt; 200 MW</Typography>
+          <Typography variant="body2">&gt; 150 MW</Typography>
         </Box>
         <Box display="flex" alignItems="center">
           <Box sx={{ width: 12, height: 12, bgcolor: 'gold', mr: 1 }} />
-          <Typography variant="body2">50 - 200 MW</Typography>
+          <Typography variant="body2">50 - 150 MW</Typography>
         </Box>
         <Box display="flex" alignItems="center">
           <Box sx={{ width: 12, height: 12, bgcolor: 'red', mr: 1 }} />

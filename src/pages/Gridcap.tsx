@@ -20,7 +20,8 @@ const App: React.FC = () => {
   const [availableYears, SetAvailableYears] = useState<number[]>([]);
   const [selectedRegion, setSelectedRegion] = useState<string>("all");
   const [availableRegions, setAvailableRegions] = useState<string[]>([]);
-
+  const [allStations, setAllStations] = useState<Station[]>([]);
+  
   const remainCap: RemainCap[] = [
     { region: 'C1', cap: 1460 },
     { region: 'C2', cap: 640 },
@@ -29,11 +30,11 @@ const App: React.FC = () => {
 
   const getGridCap = () => {
     GridCapServices.GridCapServices.getCap().then((res) => {
-      let allStations = res.data;
-      SetAvailableYears(Array.from(new Set(allStations.map((s) => s.year))).sort());
-      setAvailableRegions(Array.from(new Set(allStations.map((s) => s.zone))).sort());
-
-      setFilteredStations(allStations.filter(
+      const stationsFromAPI: Station[] = res.data;
+      setAllStations(stationsFromAPI);
+      SetAvailableYears(Array.from(new Set(stationsFromAPI.map((s) => s.year))).sort());
+      setAvailableRegions(Array.from(new Set(stationsFromAPI.map((s) => s.zone))).sort());
+      setFilteredStations(stationsFromAPI.filter(
         (s) =>
           s.capacityMW >= minCapacity &&
           (selectedYear === "all" || s.year === selectedYear) &&
@@ -42,13 +43,23 @@ const App: React.FC = () => {
     })
   };
 
-  // useEffect(()=>{
-
-  // },[selectedStationId,])
   useEffect(() => {
 
     getGridCap();
+  }, [])
+
+  useEffect(() => {
+
+    SetAvailableYears(Array.from(new Set(allStations.map((s) => s.year))).sort());
+    setAvailableRegions(Array.from(new Set(allStations.map((s) => s.zone))).sort());
+    setFilteredStations(allStations.filter(
+      (s) =>
+        s.capacityMW >= minCapacity &&
+        (selectedYear === "all" || s.year === selectedYear) &&
+        (selectedRegion === "all" || s.zone === selectedRegion)
+    ));
   }, [selectedYear, minCapacity, selectedRegion])
+
   return (
     <Box>
       <Container maxWidth={'xl'}>

@@ -10,4 +10,6 @@ export default interface Station {
   year: number; // เพิ่มปี
   updateDate:string;
   zone:string;
+  cb:string;
+  status:string;
 }

@@ -8,10 +8,11 @@ import GetJobIdClients from "../clients/GetJobIdClients";
 // }
 
 const GetJobIdService = {
-  getJobId : (lat: number,lon: number) => {
+  getJobId : (cb:string) => {
     return GetJobIdClients.post('',{
-        Latitude:lat,
-        Longitude:lon,
+        // Latitude:lat,
+        // Longitude:lon,
+        FACILITYID_CB:cb,
         f:'json'
     });
   },

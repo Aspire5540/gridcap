@@ -9,7 +9,7 @@ interface Props {
 
 export const CapacityFilter: React.FC<Props> = ({ minCapacity, setMinCapacity}) => {
   const maxCap=416;
-  const textLen="max Cap : "+maxCap+" MW";
+  // const textLen="max Cap : "+maxCap+" MW";
   return (
     <TextField
       label="Avail Cap ที่ต้องการ (MW)"
@@ -18,7 +18,7 @@ export const CapacityFilter: React.FC<Props> = ({ minCapacity, setMinCapacity}) 
       onChange={(e) => setMinCapacity(Number(e.target.value))}
       variant="outlined"
       size="small" 
-      helperText={textLen}
+      // helperText={textLen}
     />
   );
 };

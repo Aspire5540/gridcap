@@ -13,9 +13,11 @@ import GetJobIdServices from "../services/GetJobIdService";
 import MapLine from "../controller/MapLine";
 import GetTraceStatus from "../services/GetTraceStatus";
 import PurpleLightningLoader from "./PurpleLightningLoader";
-import { Backdrop, CircularProgress } from "@mui/material";
+import { Backdrop } from "@mui/material";
 import LegendBox from "./LegendBox";
 
+import * as geodesicBufferOperator from "@arcgis/core/geometry/operators/geodesicBufferOperator";
+import SimpleFillSymbol from "@arcgis/core/symbols/SimpleFillSymbol";
 
 interface Props {
   stations: Station[];
@@ -29,8 +31,10 @@ const MapComponent: React.FC<Props> = ({ stations, selectedStationId, setSelecti
   const map = useMemo(() => new Map({ basemap: "osm" }), []);
   const graphicsLayer = useMemo(() => new GraphicsLayer(), []);
   const graphicsMVconLayer = useMemo(() => new GraphicsLayer(), []);
-  const [loading, setLoading] = useState(true);
+  const bufferLayer = useMemo(() => new GraphicsLayer(), []);
 
+  const [loading, setLoading] = useState(false);
+  const [bufferVisible, setBufferVisible] = useState(true);
   const view = useMemo(
     () =>
       new MapView({
@@ -55,13 +59,13 @@ const MapComponent: React.FC<Props> = ({ stations, selectedStationId, setSelecti
     measurement.clear();
   };
 
-  const Trace115 = async (lat: number, lon: number) => {
+  const Trace115 = async (cb: string) => {
     try {
-      const res = await GetJobIdServices.GetJobIdServices.getJobId(lat, lon);
+      const res = await GetJobIdServices.GetJobIdServices.getJobId(cb);
       if (res.data.jobId) {
         const jobID = res.data.jobId;
 
-        for (let i = 0; i < 10; i++) {
+        for (let i = 0; i < 15; i++) {
           console.log("checking status...", loading);
 
           const res2 = await GetTraceStatus.GetTraceStatus(jobID);
@@ -96,88 +100,126 @@ const MapComponent: React.FC<Props> = ({ stations, selectedStationId, setSelecti
     if (toolbarRef.current) {
       view.ui.add(toolbarRef.current, "top-left");
     }
+    if (!map.layers.includes(bufferLayer)) {
+      map.add(bufferLayer);
+    }
   }, []);
 
   useEffect(() => {
+    setLoading(true); // ✅ เริ่มโหลด
     const run = async () => {
       graphicsLayer.removeAll();
-      graphicsMVconLayer.removeAll();
       map.add(graphicsLayer);
-      map.add(graphicsMVconLayer);
 
-      setLoading(true); // ✅ เริ่มโหลด
+      stations.forEach((station) => {
+        const point = {
+          type: "point" as const,
+          longitude: station.lon,
+          latitude: station.lat,
+        };
+        let color: number[];
 
-      if (selectedStationId === undefined) {
-        stations.forEach((station) => {
-          const point = {
-            type: "point" as const,
-            longitude: station.lon,
-            latitude: station.lat,
-          };
-          let color: number[];
+        if (station.capacityMW > 150) {
+          color = [0, 200, 0, 0.8]; // สีเขียว
+        } else if (station.capacityMW >= 50) {
+          color = [255, 204, 0, 0.8]; // สีเหลือง
+        } else {
+          color = [255, 0, 0, 0.8]; // สีแดง
+        }
 
-          if (station.capacityMW > 200) {
-            color = [0, 200, 0, 0.8]; // สีเขียว
-          } else if (station.capacityMW >= 50) {
-            color = [255, 204, 0, 0.8]; // สีเหลือง
-          } else {
-            color = [255, 0, 0, 0.8]; // สีแดง
-          }
-
-          const squareSymbol = new SimpleMarkerSymbol({
-            style: "square",
-            color: color,
-            size: 8,
-            outline: { color: [0, 0, 0], width: 1 },
-          });
-
-          const graphic = new Graphic({
-            geometry: point,
-            symbol: squareSymbol,
-            attributes: {
-              subEng: station.subEng,
-              subThai: station.subThai,
-              capacity: station.capacityMW,
-              year: station.year,
-            },
-            popupTemplate: {
-              title: "{subEng}",
-              content: "ชื่อสถานีไฟฟ้า : {subThai}<br/> capacity คงเหลือ (MW): {capacity} MW<br/>ปี: {year}",
-            },
-          });
-
-          graphicsLayer.add(graphic);
+        const squareSymbol = new SimpleMarkerSymbol({
+          style: "square",
+          color: color,
+          size: 8,
+          outline: { color: [0, 0, 0], width: 1 },
         });
-      } else {
-        const station = stations.find((s) => s.id === selectedStationId);
-        if (station) {
-          if (station.lon === 0) {
-            alert("ไม่พบข้อมูลใน GIS");
-          } else {
-            const result = await Trace115(station.lat, station.lon);
-            if (result?.jobId) {
-              await MapLine(graphicsMVconLayer, result.jobId); // ⏳ รอวาดเส้นให้เสร็จ
+
+        const graphic = new Graphic({
+          geometry: point,
+          symbol: squareSymbol,
+          attributes: {
+            subEng: station.subEng,
+            subThai: station.subThai,
+            capacity: station.capacityMW,
+            year: station.year,
+          },
+          popupTemplate: {
+            title: "{subEng}",
+            content: "ชื่อสถานีไฟฟ้า : {subThai}<br/> capacity คงเหลือ (MW): {capacity} MW<br/>ปี: {year}",
+          },
+        });
+        // ✅ เริ่มโหลด
+        graphicsLayer.add(graphic);
+      });
+
+    };
+    setLoading(false);
+    run();
+  }, [stations]);
+
+  useEffect(() => {
+    const run = async () => {
+      setLoading(true); // ✅ เริ่มโหลด
+      const station = stations.find((s) => s.id === selectedStationId);
+      if (station) {
+        if (station.lon === 0) {
+          alert("ไม่พบข้อมูลใน GIS");
+        } else {
+          graphicsMVconLayer.removeAll();
+          map.add(graphicsMVconLayer);
+          const result = await Trace115(station.cb);
+          if (result?.jobId) {
+            // result.jobId='j0d85e97edbb54dbb83ad5ce19ded335b'
+            const lineGraphics = await MapLine(graphicsMVconLayer, result.jobId);
+
+            if (!geodesicBufferOperator.isLoaded()) {
+              await geodesicBufferOperator.load();
             }
 
-            const zoomPoint = new Point({
-              longitude: station.lon,
-              latitude: station.lat,
-            });
+            // เคลียร์ bufferLayer ก่อน
+            bufferLayer.removeAll();
 
-            await view.when(); // ✅ รอ view พร้อม
-            await view.goTo({ target: zoomPoint, zoom: 12 });
+            for (const g of lineGraphics) {
+              const geom = g.geometry;
+              if (geom) {
+                const bufferedGeom = geodesicBufferOperator.execute(geom, 1000, {
+                  unit: "meters",
+                  curveType: "geodesic",
+                  maxDeviation: NaN,
+                });
 
-            setSelectionID(undefined);
+                if (bufferedGeom) {
+                  const bufferGraphic = new Graphic({
+                    geometry: bufferedGeom,
+                    symbol: new SimpleFillSymbol({
+                      color: [255, 204, 255, 0.2],
+                      outline: { color: [255, 102, 255], width: 1 },
+                    }),
+                  });
+                  bufferLayer.add(bufferGraphic);
+                }
+              }
+            }
+            if (!map.layers.includes(bufferLayer)) {
+              map.add(bufferLayer);
+            }
           }
+
+          const zoomPoint = new Point({
+            longitude: station.lon,
+            latitude: station.lat,
+          });
+
+          await view.when(); // ✅ รอ view พร้อม
+          await view.goTo({ target: zoomPoint, zoom: 12 });
+
+          setSelectionID(undefined);
         }
       }
-
       setLoading(false); // ✅ จบการโหลดเมื่อทุกอย่างเสร็จจริง
-    };
-
+    }
     run();
-  }, [stations, selectedStationId]);
-
+  }, [selectedStationId]);
   return (
 
     <>
@@ -186,7 +228,7 @@ const MapComponent: React.FC<Props> = ({ stations, selectedStationId, setSelecti
         sx={{
           zIndex: (theme) => theme.zIndex.drawer + 1,
           color: '#fff',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)', // ✅ พื้นหลังโปร่งดำ
+          backgroundColor: 'rgba(0, 0, 0, 0.4)', // ✅ พื้นหลังโปร่งดำ
         }}
       >
         <PurpleLightningLoader />
@@ -204,6 +246,17 @@ const MapComponent: React.FC<Props> = ({ stations, selectedStationId, setSelecti
             title="Clear Measurements"
             onClick={clearDistance}
           ></button>
+          <button
+            className="esri-widget--button esri-interactive esri-icon-collection"
+            title="Toggle Buffer"
+            onClick={() => {
+              const newVisible = !bufferVisible;
+              setBufferVisible(newVisible);
+              bufferLayer.visible = newVisible;
+            }}
+          >
+            {/* {bufferVisible ? "Buffer ON" : "Buffer OFF"} */}
+          </button>
         </div>
 
         <LegendBox />
